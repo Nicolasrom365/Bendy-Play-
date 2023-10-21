@@ -1,0 +1,455 @@
+import pygame
+import random
+import sys
+
+# Inicializar Pygame
+pygame.init()
+
+
+# Configuración de la pantalla
+screen_width = 650
+screen_height = 750
+screen = pygame.display.set_mode((screen_width, screen_height))  
+pygame.display.set_caption("BENDY PLAY EXPERINC vf65")
+
+# Colores
+white = ("#daa520")
+red = ("#0a0a0a")
+dark_red = ("#e4007c")
+blue = ("#5dc1b9")
+black = ("#58272d")
+
+# Personaje
+character_width = 50
+character_height = 50
+character_x = (screen_width - character_width) // 2
+character_y = (screen_height - character_height) // 2
+character_speed = 5
+character_health = 10000  # Vida del personaje
+character_power = 10000  # Poder del personaje
+
+# Armas mágicas
+magic_weapon_x = 0
+magic_weapon_y = 0
+magic_weapon_active = False
+
+# Compañero
+companion_width = 50
+companion_height = 50
+companion_x = character_x + 100
+companion_y = character_y
+companion_speed = 50
+companion_health = 10089855141
+companion_power = 508
+
+# Enemigos
+enemies = []
+num_enemies = 5  # Número de enemigos normales
+for _ in range(num_enemies):
+  enemy = {
+      "x": random.randint(0, screen_width - character_width),
+      "y": random.randint(0, screen_height - character_height),
+      "speed": random.randint(1, 4),
+      "health": 50,
+      "power": 20,
+  }
+  enemies.append(enemy)
+
+# Jefe final
+boss_width = 100
+boss_height = 100
+boss_x = random.randint(0, screen_width - boss_width)
+boss_y = random.randint(0, screen_height - boss_height)
+boss_speed = 2
+boss_health = 200
+boss_power = 30
+
+# Katana
+katanax = 0
+katana_visible = True
+katana_speed = 10
+
+# Gema (elemento recolectable)
+gem_width = 30
+gem_height = 30
+gem_x = random.randint(0, screen_width - gem_width)
+gem_y = random.randint(0, screen_height - gem_height)
+gem_collected = True
+
+# Puntuación
+score = 0
+
+# Barra de vida
+font = pygame.font.Font(None, 36)
+health_text = font.render(f"Vida: {character_health}", True, white)
+
+# Barra de poder
+power_text = font.render(f"Poder: {character_power}", True, blue)
+
+# Introducción
+intro_font = pygame.font.Font(None, 48)
+intro_text = intro_font.render("¿Qué secretos esconde el manicomio?", True, red)
+intro_text2 = intro_font.render("Oprime barra de espacio para jugar",
+                                True, red)
+
+intro_rect = intro_text.get_rect()
+intro_rect2 = intro_text2.get_rect()
+intro_rect.center = (screen_width // 2, screen_height // 3)
+intro_rect2.center = (screen_width // 2, screen_height // 2)
+
+# Reloj
+clock = pygame.time.Clock()
+
+
+# Función para dibujar al personaje en la pantalla
+def draw_character(x, y):
+  pygame.draw.rect(screen, white, (x, y, character_width, character_height))
+
+
+# Función para dibujar enemigos en la pantalla
+def draw_enemy(x, y):
+  pygame.draw.rect(screen, red, (x, y, character_width, character_height))
+
+
+# Función para dibujar al jefe final en la pantalla
+def draw_boss(x, y):
+  pygame.draw.rect(screen, dark_red, (x, y, boss_width, boss_height))
+
+
+# Función para dibujar la katana en la pantalla
+def draw_katana(x, y):
+  pygame.draw.rect(screen, white, (x, y, 30, 5))
+
+
+# Función para dibujar la gema en la pantalla
+def draw_gem(x, y):
+  pygame.draw.rect(screen, (0, 255, 0), (x, y, gem_width, gem_height))
+
+
+# Función para dibujar el arma mágica en la pantalla
+def draw_magic_weapon(x, y):
+  pygame.draw.rect(screen, blue, (x, y, 20, 20))
+
+
+# Función para dibujar al compañero en la pantalla
+def draw_companion(x, y):
+  pygame.draw.rect(screen, white, (x, y, companion_width, companion_height))
+
+
+# Ciclo principal del juego
+intro_done = False
+while not intro_done:
+  for event in pygame.event.get():
+    if event.type == pygame.QUIT:
+      intro_done = True
+    if event.type == pygame.KEYDOWN:
+      intro_done = True
+
+  screen.fill(black)
+  screen.blit(intro_text, intro_rect)
+  screen.blit(intro_text2, intro_rect2)
+  pygame.display.update()
+
+# Reinicializar posiciones
+character_x = (screen_width - character_width) // 2
+character_y = (screen_height - character_height) // 2
+for enemy in enemies:
+  enemy["x"] = random.randint(0, screen_width - character_width)
+  enemy["y"] = random.randint(0, screen_height - character_height)
+boss_x = random.randint(0, screen_width - boss_width)
+boss_y = random.randint(0, screen_height - boss_height)
+gem_x = random.randint(0, screen_width - gem_width)
+gem_y = random.randint(0, screen_height - gem_height)
+
+# Ciclo principal del juego
+running = True
+while running:
+  for event in pygame.event.get():
+    if event.type == pygame.QUIT:
+      running = False
+
+  # Control del personaje
+  keys = pygame.key.get_pressed()
+  if keys[pygame.K_w]:
+    character_y -= character_speed
+  if keys[pygame.K_s]:
+    character_y += character_speed
+  if keys[pygame.K_a]:
+    character_x -= character_speed
+  if keys[pygame.K_d]:
+    character_x += character_speed
+
+  # Control del compañero
+  if keys[pygame.K_UP]:
+    companion_y -= companion_speed
+  if keys[pygame.K_DOWN]:
+    companion_y += companion_speed
+  if keys[pygame.K_LEFT]:
+    companion_x -= companion_speed
+  if keys[pygame.K_RIGHT]:
+    companion_x += companion_speed
+
+  # Control de enemigos
+  for enemy in enemies:
+    if character_x < enemy["x"]:
+      enemy["x"] -= enemy["speed"]
+    elif character_x > enemy["x"]:
+      enemy["x"] += enemy["speed"]
+    if character_y < enemy["y"]:
+      enemy["y"] -= enemy["speed"]
+    elif character_y > enemy["y"]:
+      enemy["y"] += enemy["speed"]
+
+    # Colisiones con enemigos
+    if (character_x < enemy["x"] + character_width
+        and character_x + character_width > enemy["x"]
+        and character_y < enemy["y"] + character_height
+        and character_y + character_height > enemy["y"]):
+      if katana_visible:  # Si la katana está visible, el enemigo es derrotado instantáneamente
+        enemy["x"] = random.randint(0, screen_width - character_width)
+        enemy["y"] = random.randint(0, screen_height - character_height)
+        score += 1
+      else:
+        character_health -= enemy[
+            "power"]  # El personaje pierde poder si no tiene la katana
+
+  # Control del jefe final
+  if character_x < boss_x:
+    boss_x -= boss_speed
+  elif character_x > boss_x:
+    boss_x += boss_speed
+  if character_y < boss_y:
+    boss_y -= boss_speed
+  elif character_y > boss_y:
+    boss_y += boss_speed
+
+  # Colisiones con el jefe final
+  if (character_x < boss_x + boss_width
+      and character_x + character_width > boss_x
+      and character_y < boss_y + boss_height
+      and character_y + character_height > boss_y):
+    if katana_visible:  # Si la katana está visible, el jefe final pierde poder
+      boss_health -= boss_power
+
+  # Control de la katana
+  if keys[pygame.K_SPACE]:
+    katana_visible = True
+    katanax = character_x + character_width
+
+  if katana_visible:
+    katanax += katana_speed
+    if katanax > screen_width:
+      katana_visible = False
+      katanax = character_x + character_width
+
+  # Control del arma mágica
+  if keys[pygame.K_LCTRL] and character_power >= 20:
+    magic_weapon_active = True
+    magic_weapon_x = character_x + character_width
+    magic_weapon_y = character_y + character_height // 2
+    character_power -= 20
+
+  if magic_weapon_active:
+    magic_weapon_x += katana_speed
+    if magic_weapon_x > screen_width:
+      magic_weapon_active = False
+
+  # Colisiones con la gema (elemento recolectable)
+  if (character_x < gem_x + gem_width and character_x + character_width > gem_x
+      and character_y < gem_y + gem_height
+      and character_y + character_height > gem_y and not gem_collected):
+    gem_collected = True
+    score += 10  # El personaje obtiene 10 puntos al recolectar la gema
+    character_power += 20  # Aumenta el poder del personaje al recolectar la gema
+
+  # Limpiar la pantalla
+  screen.fill(black)
+
+  # Dibujar al personaje, enemigos, jefe final, compañero, la katana y la gema
+  draw_character(character_x, character_y)
+  for enemy in enemies:
+    draw_enemy(enemy["x"], enemy["y"])
+  draw_boss(boss_x, boss_y)
+  draw_companion(companion_x, companion_y)
+  if katana_visible:
+    draw_katana(katanax, character_y + (character_height // 2))
+  if not gem_collected:
+    draw_gem(gem_x, gem_y)
+  if magic_weapon_active:
+    draw_magic_weapon(magic_weapon_x, magic_weapon_y)
+
+  # Dibujar la barra de vida del personaje
+  health_text = font.render(f"Vida: {character_health}", True, white)
+  screen.blit(health_text, (10, 10))
+
+  # Dibujar la barra de poder del personaje
+  power_text = font.render(f"Poder: {character_power}", True, blue)
+  screen.blit(power_text, (10, 50))
+
+  # Dibujar la puntuación
+  score_text = font.render(f"Puntuación: {score}", True, white)
+  screen.blit(score_text, (screen_width - 200, 10))
+
+  # Dibujar la barra de vida del jefe final
+  pygame.draw.rect(screen, dark_red, (10, 70, boss_health, 10))
+
+  pygame.display.update()
+
+  # Controlar la velocidad del juego
+  clock.tick(100)
+
+  # Verificar si el personaje se queda sin vida o el jefe final es derrotado
+  if character_health <= 0:
+    running = False
+  if boss_health <= 0:
+    # Ganar el juego y pasar al siguiente nivel o resolver el misterio
+    # Aquí puedes agregar lógica para continuar el juego o mostrar un mensaje de victoria.
+    running = False
+  # ... (código anterior) ...
+
+# Enfermera
+nurse_width = 50
+nurse_height = 50
+nurse_x = random.randint(0, screen_width - nurse_width)
+nurse_y = random.randint(0, screen_height - nurse_height)
+nurse_active = False
+nurse_heal_amount = 30  # Cantidad de curación
+
+
+# Función para dibujar a la enfermera en la pantalla
+def draw_nurse(x, y):
+  pygame.draw.rect(screen, (0, 128, 255), (x, y, nurse_width, nurse_height))
+
+
+# Armas y poderes de personaje y compañero
+character_weapon = {
+    "x": character_x,
+    "y": character_y + character_height // 2,
+    "active": False,
+    "power": 40,  # Daño del arma del personaje
+}
+
+companion_weapon = {
+    "x": companion_x,
+    "y": companion_y + companion_height // 2,
+    "active": False,
+    "power": 20,  # Daño del arma del compañero
+}
+
+# Ciclo principal del juego
+running = True
+while running:
+  for event in pygame.event.get():
+    if event.type == pygame.QUIT:
+      running = False
+
+  # Control del personaje
+  keys = pygame.key.get_pressed()
+  if keys[pygame.K_w]:
+    character_y -= character_speed
+  if keys[pygame.K_s]:
+    character_y += character_speed
+  if keys[pygame.K_a]:
+    character_x -= character_speed
+  if keys[pygame.K_d]:
+    character_x += character_speed
+
+  # Control del compañero (ataque)
+  if keys[pygame.K_SPACE]:
+    companion_weapon["active"] = True
+    companion_weapon["x"] = companion_x + companion_width
+
+  if companion_weapon["active"]:
+    companion_weapon["x"] += katana_speed
+    if companion_weapon["x"] > screen_width:
+      companion_weapon["active"] = False
+      companion_weapon["x"] = companion_x + companion_width
+
+  # Control de la enfermera (cura)
+  if nurse_active and character_health < 100:
+    character_health += nurse_heal_amount
+    nurse_active = False
+
+  # Control de los enemigos
+  for enemy in enemies:
+    if keys[pygame.K_q]:
+      # Alejar a los enemigos al presionar Q
+      enemy["x"] += random.randint(-10, 10)
+      enemy["y"] += random.randint(-10, 10)
+
+    # Colisiones con armas
+    if (character_weapon["active"]
+        and character_weapon["x"] < enemy["x"] + character_width
+        and character_weapon["x"] + 30 > enemy["x"]
+        and character_y < enemy["y"] + character_height
+        and character_y + character_height > enemy["y"]):
+      enemy["health"] -= character_weapon["power"]
+      if enemy["health"] <= 0:
+        enemies.remove(enemy)
+        score += 1
+
+    if (companion_weapon["active"]
+        and companion_weapon["x"] < enemy["x"] + character_width
+        and companion_weapon["x"] + 30 > enemy["x"]
+        and companion_y < enemy["y"] + character_height
+        and companion_y + companion_height > enemy["y"]):
+      enemy["health"] -= companion_weapon["power"]
+      if enemy["health"] <= 0:
+        enemies.remove(enemy)
+        score += 1
+
+    # Control de colisiones con la enfermera
+    if (character_x < nurse_x + nurse_width
+        and character_x + character_width > nurse_x
+        and character_y < nurse_y + nurse_height
+        and character_y + character_height > nurse_y):
+      if character_health < 100:
+        nurse_active = True
+        nurse_x = random.randint(0, screen_width - nurse_width)
+        nurse_y = random.randint(0, screen_height - nurse_height)
+
+
+# Terminar Pygame
+pygame.quit()
+
+def game_over_screen(screen):
+    font = pygame.font.Font(None, 74)
+    text = font.render("Game Over", True, red)
+    text_rect = text.get_rect()
+    text_rect.center = (screen_width // 2, screen_height // 2)
+    screen.blit(text, text_rect)
+    pygame.display.flip()
+    pygame.time.delay(2000)  # Espera durante 2 segundos (2000 ms) antes de reiniciar el juego
+
+    # Reinicializar posiciones
+    global character_x, character_y
+    character_x = (screen_width - character_width) // 2
+    character_y = (screen_height - character_height) // 2
+    for enemy in enemies:
+        enemy["x"] = random.randint(0, screen_width - character_width)
+        enemy["y"] = random.randint(0, screen_height - character_height)
+    boss_x = random.randint(0, screen_width - boss_width)
+    boss_y = random.randint(0, screen_height - boss_height)
+    gem_x = random.randint(0, screen_width - gem_width)
+    gem_y = random.randint(0, screen_height - gem_height)
+
+
+
+# Ciclo principal del juego
+running = True
+while running:
+    # ... (código anterior) ...
+
+    if character_health <= 0:
+        game_over_screen(screen)
+        character_health = 10000  # Restablecer la salud del personaje
+       
+
+ 
+
+# Terminar Pygame
+pygame.quit()
+
+
+
+
